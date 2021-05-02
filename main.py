@@ -60,25 +60,25 @@ class Simulator:
 
     def compare_replace(self, index) -> int:
         if index >= 3:
-            if self.compare_cards(index, index-3):
+            if self.compare_cards(index, index - 3):
                 self.move_game_card(index - 3, index)
                 self.shift(index)
                 return index - 3
-
-        if self.compare_cards(index, index-1):
-            self.move_game_card(index - 1, index)
-            self.shift(index)
-            return index - 1
+        if index > 0:
+            if self.compare_cards(index, index - 1):
+                self.move_game_card(index - 1, index)
+                self.shift(index)
+                return index - 1
 
         return index
 
     def shift(self, index):
-        card_total = self.game[index+1][TOTAL_CARDS]
+        card_total = self.game[index + 1][TOTAL_CARDS]
 
         while card_total > 0:
             self.move_game_card(index, index + 1)
             index += 1
-            card_total = self.game[index+1][TOTAL_CARDS]
+            card_total = self.game[index + 1][TOTAL_CARDS]
 
         self.game_index -= 1
 
@@ -88,34 +88,37 @@ class Simulator:
         board = []
 
         while total > 0:
-            board.append(PRETTY_VALUES[self.game[index][VALUE]] + PRETTY_SUITS[self.game[index][SUIT]])
+            board.append(PRETTY_VALUES[self.game[index][VALUE]] + PRETTY_SUITS[
+                self.game[index][SUIT]])
             index += 1
             total = self.game[index][TOTAL_CARDS]
 
         print(board)
+        print(f"Number of active cards: {self.game_index + 1}")
 
-    def combine(self, index, target_index):
+    def combine(self, index, target_index, interactive=False):
+        if interactive:
+            self.print_game()
+            input("Press Enter to continue")
         replace_index = self.compare_replace(index)
         if replace_index < target_index:
-            return self.combine(self.game_index, replace_index)
+            return self.combine(self.game_index, replace_index, interactive)
         elif replace_index > target_index:
-            return self.combine(index-1, target_index)
+            return self.combine(index - 1, target_index, interactive)
 
-    def simulate(self):
+    def simulate(self, print_games=False, interactive=False):
         self.shuffle_cards()
         self.move_deck_card_to_game(0, 0)
         self.game_index = 1
 
         for i in range(1, 52):
             self.move_deck_card_to_game(i, self.game_index)
-            self.combine(self.game_index, self.game_index)
+            self.combine(self.game_index, self.game_index, interactive)
             self.game_index += 1
 
-        self.print_game()
+        if print_games:
+            self.print_game()
 
 
 simulator = Simulator(100)
-simulator.simulate()
-
-
-
+simulator.simulate(print_games=True)
