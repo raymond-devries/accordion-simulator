@@ -1,5 +1,6 @@
 import numpy as np
 from rich.console import Console
+from typing import Optional
 
 VALUE = 0
 SUIT = 1
@@ -38,7 +39,7 @@ SUIT_STYLES = {
 console = Console()
 
 
-class Simulator:
+class SimulatorCore:
     def __init__(self):
         self.deck = np.array([(face, suit) for face in range(13) for suit in range(4)])
         self.game = np.zeros((52, 3), np.uint8)
@@ -50,12 +51,12 @@ class Simulator:
     def shuffle_cards(self):
         np.random.shuffle(self.deck)
 
-    def move_deck_card_to_game(self, deck_index, game_index):
+    def move_deck_card_to_game(self, deck_index: int, game_index: int):
         self.game[game_index][VALUE] = self.deck[deck_index][VALUE]
         self.game[game_index][SUIT] = self.deck[deck_index][SUIT]
         self.game[game_index][TOTAL_CARDS] = 1
 
-    def move_game_card(self, old_card_index, new_card_index):
+    def move_game_card(self, old_card_index: int, new_card_index: int):
         self.game[old_card_index][VALUE] = self.game[new_card_index][VALUE]
         self.game[old_card_index][SUIT] = self.game[new_card_index][SUIT]
         self.game[old_card_index][TOTAL_CARDS] += self.game[new_card_index][TOTAL_CARDS]
@@ -64,11 +65,11 @@ class Simulator:
         self.game[new_card_index][SUIT] = 0
         self.game[new_card_index][TOTAL_CARDS] = 0
 
-    def compare_cards(self, index1, index2) -> bool:
+    def compare_cards(self, index1: int, index2: int) -> bool:
         return self.game[index1][VALUE] == self.game[index2][VALUE] or \
                self.game[index1][SUIT] == self.game[index2][SUIT]
 
-    def compare_replace(self, index) -> int:
+    def compare_replace(self, index) -> tuple[int, bool]:
         if index >= 3:
             if self.compare_cards(index, index - 3):
                 self.move_game_card(index - 3, index)
@@ -82,7 +83,7 @@ class Simulator:
 
         return index, False
 
-    def shift(self, index):
+    def shift(self, index: int):
         card_total = self.game[index + 1][TOTAL_CARDS]
 
         while card_total > 0:
@@ -92,7 +93,8 @@ class Simulator:
 
         self.game_index -= 1
 
-    def print_current_state(self, card_being_checked=None, last_stacked=None):
+    def print_current_state(self, card_being_checked: Optional[int] = None,
+                            last_stacked: Optional[int] = None):
         total = self.game[0][TOTAL_CARDS]
         index = 0
         board = []
@@ -118,7 +120,8 @@ class Simulator:
         console.print(" ".join(board))
         console.print(f"Number of active cards: {self.game_index + 1}")
 
-    def combine(self, index, target_index, interactive=False, last_stacked=None):
+    def combine(self, index: int, target_index: int, interactive: bool = False,
+                last_stacked: Optional[int] = None) -> int:
         if interactive:
             self.print_current_state(card_being_checked=index,
                                      last_stacked=last_stacked)
@@ -133,7 +136,7 @@ class Simulator:
 
         return last_stacked
 
-    def check_validity(self):
+    def check_validity(self) -> bool:
         index = 51
         while index >= 0:
             if self.game[index][TOTAL_CARDS] == 0:
@@ -147,8 +150,9 @@ class Simulator:
 
             return True
 
-    def simulate(self, print_game=False, interactive=False, save_csv=False,
-                 deck_csv=None):
+    def simulate(self, print_game: bool = False, interactive: bool = False,
+                 save_csv: Optional[str] = False,
+                 deck_csv: Optional[str] = None):
         if deck_csv is not None:
             self.deck = np.genfromtxt(deck_csv, delimiter=",")
         else:
