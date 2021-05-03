@@ -1,15 +1,10 @@
 import numpy as np
+from rich.console import Console
+from rich import print
 
 VALUE = 0
 SUIT = 1
 TOTAL_CARDS = 2
-
-PRETTY_SUITS = {
-    0: '♣',
-    1: '♦',
-    2: '♥',
-    3: '♠'
-}
 
 PRETTY_VALUES = {
     0: 'A',
@@ -26,6 +21,22 @@ PRETTY_VALUES = {
     11: 'Q',
     12: 'K'
 }
+
+PRETTY_SUITS = {
+    0: '♣',
+    1: '♦',
+    2: '♥',
+    3: '♠'
+}
+
+SUIT_STYLES = {
+    0: "bold black on bright_white",
+    1: "bold dark_red on bright_white",
+    2: "bold dark_red on bright_white",
+    3: "bold black on bright_white"
+}
+
+console = Console()
 
 
 class Simulator:
@@ -82,32 +93,57 @@ class Simulator:
 
         self.game_index -= 1
 
-    def print_game(self):
+    def print_current_state(self, card_being_checked=None):
         total = self.game[0][TOTAL_CARDS]
         index = 0
         board = []
 
         while total > 0:
-            board.append(PRETTY_VALUES[self.game[index][VALUE]] + PRETTY_SUITS[
-                self.game[index][SUIT]])
+            value = PRETTY_VALUES[self.game[index][VALUE]]
+            suit = PRETTY_SUITS[self.game[index][SUIT]]
+            style = SUIT_STYLES[self.game[index][SUIT]]
+            selection = ""
+            if card_being_checked == index:
+                selection = "[default on blue] [/default on blue]"
+            board.append(f"{selection}[{style}] {value}{suit} [/{style}]{selection}")
             index += 1
             total = self.game[index][TOTAL_CARDS]
 
-        print(board)
-        print(f"Number of active cards: {self.game_index + 1}")
+        console.print(" ".join(board))
+        console.print(f"Number of active cards: {self.game_index + 1}")
 
     def combine(self, index, target_index, interactive=False):
-        if interactive:
-            self.print_game()
-            input("Press Enter to continue")
         replace_index = self.compare_replace(index)
+        if interactive:
+            self.print_current_state(card_being_checked=index)
+            print(f"Replace index: {replace_index}")
+            print(f"Target index: {target_index}")
+            print(f"Index to Check: {index}")
+            # input("Press Enter to continue")
         if replace_index < target_index:
             return self.combine(self.game_index, replace_index, interactive)
         elif replace_index > target_index:
             return self.combine(index - 1, target_index, interactive)
 
-    def simulate(self, print_games=False, interactive=False):
-        self.shuffle_cards()
+    def check_validity(self):
+        index = 51
+        while index >= 0:
+            if self.game[index][TOTAL_CARDS] == 0:
+                index -= 1
+                continue
+
+            if index > 0 and self.compare_cards(index, index-1):
+                return False
+            if index >= 3 and self.compare_cards(index, index-3):
+                return False
+
+            return True
+
+    def simulate(self, print_games=False, interactive=False, save_csv=False, deck_csv=None):
+        if deck_csv is not None:
+            self.deck = np.genfromtxt(deck_csv, delimiter=",")
+        else:
+            self.shuffle_cards()
         self.move_deck_card_to_game(0, 0)
         self.game_index = 1
 
@@ -116,8 +152,15 @@ class Simulator:
             self.combine(self.game_index, self.game_index, interactive)
             self.game_index += 1
 
+        self.game_index -= 1
+
         if print_games:
-            self.print_game()
+            self.print_current_state()
+
+        if save_csv:
+            np.savetxt("bad2.csv", self.deck, delimiter=",")
+
+        return self.check_validity()
 
 
 simulator = Simulator(100)
