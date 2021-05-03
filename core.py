@@ -197,6 +197,9 @@ class SimulatorCore:
             self.print_current_state()
 
         if save_csv:
-            np.savetxt("bad2.csv", self.deck, delimiter=",")
+            if isinstance(save_csv, str):
+                np.savetxt(save_csv, self.deck, delimiter=",")
+            else:
+                ValueError("save_csv must be False or str type")
 
         return self.game[0][TOTAL_CARDS]
