@@ -7,4 +7,4 @@ app = typer.Typer()
 
 @app.command()
 def simulate():
-    console.print("[blue]CLI simulation command")
+    console.print("[red]CLI is not implemented yet")

@@ -90,7 +90,11 @@ def run_multiple_simulations(
     total_cards = sum(results)
     average_cards = total_cards / simulations
     print_results = print_results or print_games
-    final_results = {"total_cards": total_cards, "average_cards": average_cards}
+    final_results = {
+        "results": results,
+        "total_cards": total_cards,
+        "average_cards": average_cards,
+    }
 
     if print_results:
         console.rule("[b]RESULTS[/b]")
