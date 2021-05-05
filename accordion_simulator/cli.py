@@ -1,4 +1,5 @@
 import typer
+
 from accordion_simulator.core import console
 
 app = typer.Typer()

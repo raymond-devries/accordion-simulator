@@ -1,39 +1,35 @@
+from typing import Optional
+
 import numpy as np
 from rich.console import Console
-from typing import Optional
 
 VALUE = 0
 SUIT = 1
 TOTAL_CARDS = 2
 
 PRETTY_VALUES = {
-    0: 'A',
-    1: '2',
-    2: '3',
-    3: '4',
-    4: '5',
-    5: '6',
-    6: '7',
-    7: '8',
-    8: '9',
-    9: '10',
-    10: 'J',
-    11: 'Q',
-    12: 'K'
+    0: "A",
+    1: "2",
+    2: "3",
+    3: "4",
+    4: "5",
+    5: "6",
+    6: "7",
+    7: "8",
+    8: "9",
+    9: "10",
+    10: "J",
+    11: "Q",
+    12: "K",
 }
 
-PRETTY_SUITS = {
-    0: '♣',
-    1: '♦',
-    2: '♥',
-    3: '♠'
-}
+PRETTY_SUITS = {0: "♣", 1: "♦", 2: "♥", 3: "♠"}
 
 SUIT_STYLES = {
     0: "bold black on bright_white",
     1: "bold dark_red on bright_white",
     2: "bold dark_red on bright_white",
-    3: "bold black on bright_white"
+    3: "bold black on bright_white",
 }
 
 console = Console()
@@ -66,8 +62,10 @@ class SimulatorCore:
         self.game[new_card_index][TOTAL_CARDS] = 0
 
     def compare_cards(self, index1: int, index2: int) -> bool:
-        return self.game[index1][VALUE] == self.game[index2][VALUE] or \
-               self.game[index1][SUIT] == self.game[index2][SUIT]
+        return (
+            self.game[index1][VALUE] == self.game[index2][VALUE]
+            or self.game[index1][SUIT] == self.game[index2][SUIT]
+        )
 
     def compare_replace(self, index) -> tuple[int, bool]:
         if index >= 3:
@@ -93,8 +91,11 @@ class SimulatorCore:
 
         self.game_index -= 1
 
-    def print_current_state(self, card_being_checked: Optional[int] = None,
-                            last_stacked: Optional[int] = None):
+    def print_current_state(
+        self,
+        card_being_checked: Optional[int] = None,
+        last_stacked: Optional[int] = None,
+    ):
         total = self.game[0][TOTAL_CARDS]
         index = 0
         board = []
@@ -110,27 +111,36 @@ class SimulatorCore:
                 selection = "[default on blue] [/default on blue]"
             if last_stacked == index:
                 stacked = "[default on red] [/default on red]"
-            board.append(f"{stacked}{selection}"
-                         f"[{style}] {value}{suit} [/{style}]"
-                         f"{selection}{stacked}"
-                         f"([green]{total}[/green])")
+            board.append(
+                f"{stacked}{selection}"
+                f"[{style}] {value}{suit} [/{style}]"
+                f"{selection}{stacked}"
+                f"([green]{total}[/green])"
+            )
             index += 1
             total = self.game[index][TOTAL_CARDS]
 
         console.print(" ".join(board))
         console.print(f"Number of active cards: {self.game_index + 1}")
 
-    def combine(self, index: int, target_index: int, interactive: bool = False,
-                last_stacked: Optional[int] = None) -> int:
+    def combine(
+        self,
+        index: int,
+        target_index: int,
+        interactive: bool = False,
+        last_stacked: Optional[int] = None,
+    ) -> int:
         if interactive:
-            self.print_current_state(card_being_checked=index,
-                                     last_stacked=last_stacked)
+            self.print_current_state(
+                card_being_checked=index, last_stacked=last_stacked
+            )
             input("Press enter to continue")
             print()
         replace_index, replaced = self.compare_replace(index)
         if replaced:
-            return self.combine(self.game_index, replace_index, interactive,
-                                replace_index)
+            return self.combine(
+                self.game_index, replace_index, interactive, replace_index
+            )
         elif replace_index > target_index:
             return self.combine(index - 1, target_index, interactive, last_stacked)
 
@@ -150,9 +160,13 @@ class SimulatorCore:
 
             return True
 
-    def simulate(self, print_game: bool = False, interactive: bool = False,
-                 save_csv: Optional[str] = False,
-                 deck_csv: Optional[str] = None):
+    def simulate(
+        self,
+        print_game: bool = False,
+        interactive: bool = False,
+        save_csv: Optional[str] = False,
+        deck_csv: Optional[str] = None,
+    ):
         if deck_csv is not None:
             self.deck = np.genfromtxt(deck_csv, delimiter=",")
         else:
@@ -164,22 +178,27 @@ class SimulatorCore:
             console.rule("[b blue]Welcome to interactive mode![/b blue]")
             console.print(
                 f"[b blue] In this mode the program stops every time it "
-                f"evaluates a card for a match.[/b blue]")
+                f"evaluates a card for a match.[/b blue]"
+            )
             console.print(
                 f"[b blue] The card/stack being evaluated for a match is surrounded by "
                 f"blue bars like so:[/b blue]"
                 f"[default on blue] [/default on blue]"
                 f"[{SUIT_STYLES[2]}] A♥ [/{SUIT_STYLES[2]}]"
-                f"[default on blue] [/default on blue]")
-            console.print("[b blue] The number of cards in a stack including the top "
-                          "card is indicated by the green number, for example:[/b blue]"
-                          "([green]4[/green])")
+                f"[default on blue] [/default on blue]"
+            )
+            console.print(
+                "[b blue] The number of cards in a stack including the top "
+                "card is indicated by the green number, for example:[/b blue]"
+                "([green]4[/green])"
+            )
             console.print(
                 f"[b blue] The last stack to have a card/stack placed on it is "
                 f"surrounded by red bars like so:[/b blue] "
                 f"[default on red] [/default on red]"
                 f"[{SUIT_STYLES[2]}] A♥ [/{SUIT_STYLES[2]}]"
-                f"[default on red] [/default on red]")
+                f"[default on red] [/default on red]"
+            )
             input("Press enter to continue\n")
 
         last_stacked = None
@@ -187,8 +206,9 @@ class SimulatorCore:
             self.move_deck_card_to_game(i, self.game_index)
             if interactive:
                 console.print(f"[u]Cards left in deck: {51 - i}[u]")
-            last_stacked = self.combine(self.game_index, self.game_index, interactive,
-                                        last_stacked)
+            last_stacked = self.combine(
+                self.game_index, self.game_index, interactive, last_stacked
+            )
             self.game_index += 1
 
         self.game_index -= 1
