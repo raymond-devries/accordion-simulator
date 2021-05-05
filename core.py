@@ -125,7 +125,7 @@ class SimulatorCore:
         if interactive:
             self.print_current_state(card_being_checked=index,
                                      last_stacked=last_stacked)
-            input("Press any key to continue")
+            input("Press enter to continue")
             print()
         replace_index, replaced = self.compare_replace(index)
         if replaced:
@@ -180,7 +180,7 @@ class SimulatorCore:
                 f"[default on red] [/default on red]"
                 f"[{SUIT_STYLES[2]}] A♥ [/{SUIT_STYLES[2]}]"
                 f"[default on red] [/default on red]")
-            input("Press any key to continue\n")
+            input("Press enter to continue\n")
 
         last_stacked = None
         for i in range(1, 52):
