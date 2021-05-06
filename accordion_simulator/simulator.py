@@ -64,7 +64,6 @@ def run_multiple_simulations(
         else:
             client = Client(dask_address)
         console.print(client)
-        client.upload_file("core.py")
 
         if print_games:
             console.print("[red]Printing games is disabled when using dask.[/red]")
