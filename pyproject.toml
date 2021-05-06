@@ -9,11 +9,12 @@ license = "MIT"
 accordion = "accordion_simulator.cli:simulate"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.10"
 numpy = "^1.20.2"
 dask = {extras = ["distributed"], version = "^2021.4.1"}
 rich = "^10.1.0"
 typer = "^0.3.2"
+numba = "^0.53.1"
 
 [tool.poetry.dev-dependencies]
 black = "^21.5b0"
