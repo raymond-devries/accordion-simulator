@@ -2,7 +2,7 @@
 name = "accordion-simulator"
 version = "0.1.2"
 description = "A simulator for the game accordion."
-authors = ["raymonddevries"]
+authors = ["Raymond DeVries"]
 license = "MIT"
 
 [tool.poetry.scripts]
