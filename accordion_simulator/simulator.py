@@ -1,10 +1,11 @@
+import datetime
+import time
 from typing import Optional
 
 from dask import bag as dask_bag
 from dask.distributed import Client
-from rich.progress import track
 
-from accordion_simulator.core import SimulatorCore, console
+from accordion_simulator.core import console, multiple_simulations, simulate_recursive
 
 
 def run_simulation(
@@ -16,7 +17,7 @@ def run_simulation(
     deck_csv: Optional[str] = None,
 ) -> dict:
     print_game = print_game or interactive
-    total_cards = SimulatorCore().simulate(print_game, interactive, save_csv, deck_csv)
+    total_cards = simulate_recursive(print_game, interactive, save_csv, deck_csv)
 
     results = {"total_cards": total_cards}
     gross = total_cards * earned_per_card
@@ -70,21 +71,23 @@ def run_multiple_simulations(
             console.print("[blue]Final results will still be printed[/blue]")
 
         def simulate(*_):
-            return SimulatorCore().simulate()
+            return simulate_recursive()
 
         bag = dask_bag.from_sequence(
             range(simulations), partition_size=dask_bag_partition_size
         )
         results = bag.map(simulate).compute()
 
+    elif print_games:
+        results = [simulate_recursive(True) for _ in range(simulations)]
+
     else:
-        simulator = SimulatorCore()
-        results = [
-            simulator.simulate(print_games)
-            for _ in track(
-                range(simulations), "Running Simulations", disable=print_games
-            )
-        ]
+        console.print("[yellow]Running Simulations")
+        start = time.time()
+        results = multiple_simulations(simulations)
+        end = time.time()
+        time_taken = str(datetime.timedelta(seconds=round(end - start, 2)))[:-4]
+        console.print(f"[green]Finished running Simulations in {time_taken}")
 
     total_cards = sum(results)
     average_cards = total_cards / simulations

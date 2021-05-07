@@ -183,104 +183,108 @@ def simulate() -> int:
     return game[0][TOTAL_CARDS]
 
 
-class SimulatorCore:
-    def __init__(self):
-        self.deck = np.array([(face, suit) for face in range(13) for suit in range(4)])
-        self.game = np.zeros((52, 3), np.uint8)
+@njit
+def multiple_simulations(n: int):
+    results = np.zeros(n)
+    for i in range(n):
+        results[i] = simulate()
 
-        self.game_index = 0
-        self.game_number = 0
-        self.game_results = None
+    return results
 
-    def combine(
-        self,
-        index: int,
-        target_index: int,
-        interactive: bool = False,
-        last_stacked: Optional[int] = None,
-    ) -> int:
+
+def combine_recursive(
+    game: np.array,
+    game_index: int,
+    index: int,
+    target_index: int,
+    interactive: bool = False,
+    last_stacked: Optional[int] = None,
+) -> int:
+    if interactive:
+        print_current_state(
+            game,
+            game_index,
+            card_being_checked=index,
+            last_stacked=last_stacked,
+        )
+        input("Press enter to continue")
+        print()
+    replace_index, replaced = _compare_replace(game, index)
+
+    if replaced:
+        game_index -= 1
+        return combine_recursive(
+            game, game_index, game_index, replace_index, interactive, replace_index
+        )
+    elif replace_index > target_index:
+        return combine_recursive(
+            game, game_index, index - 1, target_index, interactive, last_stacked
+        )
+
+    return last_stacked, game_index
+
+
+def simulate_recursive(
+    print_game: bool = False,
+    interactive: bool = False,
+    save_csv: Optional[str] = False,
+    deck_csv: Optional[str] = None,
+):
+    game = np.zeros((52, 3), np.uint8)
+    if deck_csv is not None:
+        deck = np.genfromtxt(deck_csv, delimiter=",")
+    else:
+        deck = np.copy(new_deck)
+        _shuffle(deck)
+    _move_deck_card_to_game(deck, game, 0, 0)
+    game_index = 1
+
+    if interactive:
+        console.rule("[b blue]Welcome to interactive mode![/b blue]")
+        console.print(
+            f"[b blue] In this mode the program stops every time it "
+            f"evaluates a card for a match.[/b blue]"
+        )
+        console.print(
+            f"[b blue] The card/stack being evaluated for a match is surrounded by "
+            f"blue bars like so:[/b blue]"
+            f"[default on blue] [/default on blue]"
+            f"[{SUIT_STYLES[2]}] A♥ [/{SUIT_STYLES[2]}]"
+            f"[default on blue] [/default on blue]"
+        )
+        console.print(
+            "[b blue] The number of cards in a stack including the top "
+            "card is indicated by the green number, for example:[/b blue]"
+            "([green]4[/green])"
+        )
+        console.print(
+            f"[b blue] The last stack to have a card/stack placed on it is "
+            f"surrounded by red bars like so:[/b blue] "
+            f"[default on red] [/default on red]"
+            f"[{SUIT_STYLES[2]}] A♥ [/{SUIT_STYLES[2]}]"
+            f"[default on red] [/default on red]"
+        )
+        input("Press enter to continue\n")
+
+    last_stacked = None
+    for i in range(1, 52):
+        _move_deck_card_to_game(deck, game, i, game_index)
         if interactive:
-            print_current_state(
-                self.game,
-                self.game_index,
-                card_being_checked=index,
-                last_stacked=last_stacked,
-            )
-            input("Press enter to continue")
-            print()
-        replace_index, replaced = _compare_replace(self.game, index)
+            console.print(f"[u]Cards left in deck: {51 - i}[u]")
+        last_stacked, game_index = combine_recursive(
+            game, game_index, game_index, game_index, interactive, last_stacked
+        )
+        game_index += 1
 
-        if replaced:
-            self.game_index -= 1
-            return self.combine(
-                self.game_index, replace_index, interactive, replace_index
-            )
-        elif replace_index > target_index:
-            return self.combine(index - 1, target_index, interactive, last_stacked)
+    game_index -= 1
 
-        return last_stacked
+    if print_game:
+        print_current_state(game, game_index)
 
-    def simulate(
-        self,
-        print_game: bool = False,
-        interactive: bool = False,
-        save_csv: Optional[str] = False,
-        deck_csv: Optional[str] = None,
-    ):
-        self.game = np.zeros((52, 3), np.uint8)
-        if deck_csv is not None:
-            self.deck = np.genfromtxt(deck_csv, delimiter=",")
+    if save_csv:
+        if isinstance(save_csv, str):
+            np.savetxt(save_csv, deck, delimiter=",")
         else:
-            _shuffle(self.deck)
-        _move_deck_card_to_game(self.deck, self.game, 0, 0)
-        self.game_index = 1
+            ValueError("save_csv must be False or str type")
 
-        if interactive:
-            console.rule("[b blue]Welcome to interactive mode![/b blue]")
-            console.print(
-                f"[b blue] In this mode the program stops every time it "
-                f"evaluates a card for a match.[/b blue]"
-            )
-            console.print(
-                f"[b blue] The card/stack being evaluated for a match is surrounded by "
-                f"blue bars like so:[/b blue]"
-                f"[default on blue] [/default on blue]"
-                f"[{SUIT_STYLES[2]}] A♥ [/{SUIT_STYLES[2]}]"
-                f"[default on blue] [/default on blue]"
-            )
-            console.print(
-                "[b blue] The number of cards in a stack including the top "
-                "card is indicated by the green number, for example:[/b blue]"
-                "([green]4[/green])"
-            )
-            console.print(
-                f"[b blue] The last stack to have a card/stack placed on it is "
-                f"surrounded by red bars like so:[/b blue] "
-                f"[default on red] [/default on red]"
-                f"[{SUIT_STYLES[2]}] A♥ [/{SUIT_STYLES[2]}]"
-                f"[default on red] [/default on red]"
-            )
-            input("Press enter to continue\n")
-
-        last_stacked = None
-        for i in range(1, 52):
-            _move_deck_card_to_game(self.deck, self.game, i, self.game_index)
-            if interactive:
-                console.print(f"[u]Cards left in deck: {51 - i}[u]")
-            last_stacked = self.combine(
-                self.game_index, self.game_index, interactive, last_stacked
-            )
-            self.game_index += 1
-
-        self.game_index -= 1
-
-        if print_game:
-            print_current_state(self.game, self.game_index)
-
-        if save_csv:
-            if isinstance(save_csv, str):
-                np.savetxt(save_csv, self.deck, delimiter=",")
-            else:
-                ValueError("save_csv must be False or str type")
-
-        return self.game[0][TOTAL_CARDS]
+    return game[0][TOTAL_CARDS]
