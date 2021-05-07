@@ -1,8 +1,10 @@
 import datetime
+import itertools
 import time
 from typing import Optional
 
-from dask import bag as dask_bag
+import dask
+from dask import delayed
 from dask.distributed import Client
 
 from accordion_simulator.core import console, multiple_simulations, simulate_recursive
@@ -51,7 +53,7 @@ def run_multiple_simulations(
     print_games: bool = False,
     use_dask: bool = False,
     dask_address: Optional[str] = None,
-    dask_bag_partition_size: int = 10000,
+    dask_chunk: int = 1_000_000,
     custom_dask_client: Optional[Client] = None,
 ) -> dict:
     if use_dask:
@@ -70,13 +72,14 @@ def run_multiple_simulations(
             console.print("[red]Printing games is disabled when using dask.[/red]")
             console.print("[blue]Final results will still be printed[/blue]")
 
-        def simulate(*_):
-            return simulate_recursive()
+        tasks = simulations // dask_chunk
+        left_over = simulations % dask_chunk
 
-        bag = dask_bag.from_sequence(
-            range(simulations), partition_size=dask_bag_partition_size
-        )
-        results = bag.map(simulate).compute()
+        results = [delayed(multiple_simulations)(dask_chunk)] * tasks
+        results.append(delayed(multiple_simulations)(left_over))
+
+        results = dask.compute(*results)
+        results = list(itertools.chain(*results))
 
     elif print_games:
         results = [simulate_recursive(True) for _ in range(simulations)]
