@@ -35,6 +35,8 @@ SUIT_STYLES = {
 
 console = Console()
 
+new_deck = np.array([(face, suit) for face in range(13) for suit in range(4)], np.uint8)
+
 
 def print_current_state(
     game,
@@ -71,7 +73,7 @@ def print_current_state(
 
 
 @njit
-def _compare(array: np.array, index1: int, index2: int):
+def _compare(array: np.array, index1: int, index2: int) -> bool:
     return (
         array[index1][VALUE] == array[index2][VALUE]
         or array[index1][SUIT] == array[index2][SUIT]
@@ -125,11 +127,26 @@ def _move_deck_card_to_game(
 
 
 @njit
-def _shuffle(array: np.array):
+def _shuffle(array: np.array) -> np.array:
     np.random.shuffle(array)
 
 
-# TODO fix function
+def _check_validity(array) -> bool:
+    index = 51
+    while index >= 0:
+        if array[index][TOTAL_CARDS] == 0:
+            index -= 1
+            continue
+
+        if index > 0 and _compare(array, index, index - 1):
+            return False
+        if index >= 3 and _compare(array, index, index - 3):
+            return False
+
+        return True
+
+
+@njit
 def _combine(array, index, game_index):
     replace_index, replaced = _compare_replace(array, index)
 
@@ -138,22 +155,23 @@ def _combine(array, index, game_index):
 
     game_index = game_index - 1
     index = game_index
+    target_index = replace_index
 
-    while replace_index <= index:
+    while target_index <= index:
         replace_index, replaced = _compare_replace(array, index)
-        if not replaced:
-            index = index - 1
-            continue
-
-        game_index = game_index - 1
-        index = game_index
+        if replaced:
+            target_index = replace_index
+            game_index -= 1
+            index = game_index
+        else:
+            index -= 1
 
     return game_index
 
 
-# TODO fix function
-def simulate():
-    deck = np.array([(face, suit) for face in range(13) for suit in range(4)])
+@njit
+def simulate() -> int:
+    deck = np.copy(new_deck)
     game = np.zeros((52, 3), np.uint8)
     _shuffle(deck)
     _move_deck_card_to_game(deck, game, 0, 0)
@@ -201,20 +219,6 @@ class SimulatorCore:
             return self.combine(index - 1, target_index, interactive, last_stacked)
 
         return last_stacked
-
-    def check_validity(self) -> bool:
-        index = 51
-        while index >= 0:
-            if self.game[index][TOTAL_CARDS] == 0:
-                index -= 1
-                continue
-
-            if index > 0 and _compare(self.game, index, index - 1):
-                return False
-            if index >= 3 and _compare(self.game, index, index - 3):
-                return False
-
-            return True
 
     def simulate(
         self,
