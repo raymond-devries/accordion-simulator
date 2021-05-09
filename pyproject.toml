@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "cg-simulator"
-version = "0.1.0"
+version = "0.1.1"
 description = "A simulator for card games."
 authors = ["Raymond DeVries"]
 license = "MIT"
 
 [tool.poetry.scripts]
-accordion = "accordion_simulator.cli:simulate"
+cgs = "cg_simulator.cli:app"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"

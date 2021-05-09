@@ -7,8 +7,8 @@ import dask
 from dask import delayed
 from dask.distributed import Client
 
+from cg_simulator.accordion.core import multiple_simulations, simulate_recursive
 from cg_simulator.core import console
-from cg_simulator.games.accordion import multiple_simulations, simulate_recursive
 
 
 def run_simulation(
@@ -70,7 +70,7 @@ def run_multiple_simulations(
         console.print(client)
 
         if print_games:
-            console.print("[red]Printing games is disabled when using dask.[/red]")
+            console.print("[red]Printing game_cores is disabled when using dask.[/red]")
             console.print("[blue]Final results will still be printed[/blue]")
 
         tasks = simulations // dask_chunk
@@ -104,7 +104,7 @@ def run_multiple_simulations(
 
     if print_results:
         console.rule("[b]RESULTS[/b]")
-        console.print(f"You played {simulations: ,} games")
+        console.print(f"You played {simulations: ,} game_cores")
         console.print(f"Average cards in first stack: {average_cards}")
 
     if cost_per_deck or earned_per_card:
