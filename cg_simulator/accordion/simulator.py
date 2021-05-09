@@ -7,7 +7,7 @@ import dask
 from dask import delayed
 from dask.distributed import Client
 
-from cg_simulator.accordion.core import multiple_simulations, simulate_recursive
+from cg_simulator.accordion.core import simulate_multiple, simulate_recursive
 from cg_simulator.core import console
 
 
@@ -76,8 +76,8 @@ def run_multiple_simulations(
         tasks = simulations // dask_chunk
         left_over = simulations % dask_chunk
 
-        results = [delayed(multiple_simulations)(dask_chunk)] * tasks
-        results.append(delayed(multiple_simulations)(left_over))
+        results = [delayed(simulate_multiple)(dask_chunk)] * tasks
+        results.append(delayed(simulate_multiple)(left_over))
 
         results = dask.compute(*results)
         results = list(itertools.chain(*results))
@@ -88,7 +88,7 @@ def run_multiple_simulations(
     else:
         console.print("[yellow]Running Simulations")
         start = time.time()
-        results = multiple_simulations(simulations)
+        results = simulate_multiple(simulations)
         end = time.time()
         time_taken = str(datetime.timedelta(seconds=round(end - start, 2)))[:-4]
         console.print(f"[green]Finished running Simulations in {time_taken}")

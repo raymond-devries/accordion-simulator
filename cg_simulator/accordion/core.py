@@ -94,7 +94,7 @@ def simulate() -> int:
 
 
 @njit
-def multiple_simulations(n: int):
+def simulate_multiple(n: int):
     results = np.zeros(n)
     for i in range(n):
         results[i] = simulate()

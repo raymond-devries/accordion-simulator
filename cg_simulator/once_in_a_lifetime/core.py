@@ -1,4 +1,5 @@
 import numpy as np
+from numba import njit
 
 from cg_simulator.core import (
     TOTAL_CARDS,
@@ -11,24 +12,24 @@ from cg_simulator.core import (
 )
 
 
+@njit
 def _remove_slice(array, start, end):
     for i in range(start, end):
         remove_card(array, i)
 
 
+@njit
 def _play(array: np.array):
     index1 = 0
     card_checked = array[index1 + 3][TOTAL_CARDS]
 
-    while card_checked:
-        # print_current_state(array, 0, index1 + 3, index1)
-        # input()
+    while card_checked and index1 + 3 < 52:
         index2 = index1 + 3
 
         if rank_match(array, index1, index2):
             _remove_slice(array, index1, index2 + 1)
             shift(array, index1, empty_space=4)
-            index1 -= 4
+            index1 = max(0, index1 - 4)
 
         elif suit_match(array, index1, index2):
             _remove_slice(array, index1 + 1, index2)
@@ -40,9 +41,20 @@ def _play(array: np.array):
 
         card_checked = array[index1 + 3][TOTAL_CARDS]
 
+    return np.sum(array, 0)[TOTAL_CARDS]
 
+
+@njit
 def simulate():
     deck = get_shuffled_deck()
     totals = np.ones((52, 1), np.uint8)
     game = np.append(deck, totals, 1)
-    _play(game)
+    game_results = _play(game)
+    return game_results
+
+
+@njit
+def simulate_multiple(n=10):
+    results = np.zeros(n, np.uint8)
+    for i in range(n):
+        results[i] = simulate()

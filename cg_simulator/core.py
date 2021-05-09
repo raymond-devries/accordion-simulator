@@ -100,19 +100,21 @@ def move_card(array: np.array, new_index: int, old_index: int):
     array[old_index][TOTAL_CARDS] = 0
 
 
+@njit
 def remove_card(array: np.array, index):
     array[index][VALUE] = 0
     array[index][SUIT] = 0
     array[index][TOTAL_CARDS] = 0
 
 
+@njit
 def shift(array, index, empty_space=1):
     card_total = array[index + empty_space][TOTAL_CARDS]
 
     while card_total > 0:
         move_card(array, index, index + empty_space)
         index += 1
-        card_total = array[index + empty_space][TOTAL_CARDS]
+        card_total = array[min(index + empty_space, 51)][TOTAL_CARDS]
 
 
 @njit
