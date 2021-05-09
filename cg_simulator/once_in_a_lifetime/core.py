@@ -58,3 +58,5 @@ def simulate_multiple(n=10):
     results = np.zeros(n, np.uint8)
     for i in range(n):
         results[i] = simulate()
+
+    return results
