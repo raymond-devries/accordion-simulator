@@ -104,7 +104,7 @@ def run_multiple_simulations(
 
     if print_results:
         console.rule("[b]RESULTS[/b]")
-        console.print(f"You played {simulations: ,} game_cores")
+        console.print(f"You played {simulations: ,} games")
         console.print(f"Average cards in first stack: {average_cards}")
 
     if cost_per_deck or earned_per_card:

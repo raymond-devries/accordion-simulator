@@ -8,11 +8,11 @@ from cg_simulator.core import (
     SUIT_STYLES,
     TOTAL_CARDS,
     VALUE,
-    compare,
     console,
     get_shuffled_deck,
     move_card,
     print_current_state,
+    rank_or_suit_match,
     shift,
 )
 
@@ -20,12 +20,12 @@ from cg_simulator.core import (
 @njit
 def _compare_replace(array, index) -> tuple[int, bool]:
     if index >= 3:
-        if compare(array, index, index - 3):
+        if rank_or_suit_match(array, index, index - 3):
             move_card(array, index - 3, index)
             shift(array, index)
             return index - 3, True
     if index > 0:
-        if compare(array, index, index - 1):
+        if rank_or_suit_match(array, index, index - 1):
             move_card(array, index - 1, index)
             shift(array, index)
             return index - 1, True
@@ -49,9 +49,9 @@ def _check_validity(array) -> bool:
             index -= 1
             continue
 
-        if index > 0 and compare(array, index, index - 1):
+        if index > 0 and rank_or_suit_match(array, index, index - 1):
             return False
-        if index >= 3 and compare(array, index, index - 3):
+        if index >= 3 and rank_or_suit_match(array, index, index - 3):
             return False
 
         return True

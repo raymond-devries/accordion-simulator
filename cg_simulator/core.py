@@ -33,7 +33,6 @@ SUIT_STYLES = {
     3: "bold dark_red on bright_white",
 }
 
-
 NEW_DECK = np.array([(face, suit) for face in range(13) for suit in range(4)], np.uint8)
 
 console = Console()
@@ -67,6 +66,8 @@ def print_current_state(
             f"([green]{total}[/green])"
         )
         index += 1
+        if index > 51:
+            break
         total = game[index][TOTAL_CARDS]
 
     console.print(" ".join(board))
@@ -74,32 +75,44 @@ def print_current_state(
 
 
 @njit
-def compare(array: np.array, index1: int, index2: int) -> bool:
-    return (
-        array[index1][VALUE] == array[index2][VALUE]
-        or array[index1][SUIT] == array[index2][SUIT]
-    )
+def rank_match(array: np.array, index1: int, index2: int):
+    return array[index1][VALUE] == array[index2][VALUE]
 
 
 @njit
-def move_card(array: np.array, old_index: int, new_index: int):
-    array[old_index][VALUE] = array[new_index][VALUE]
-    array[old_index][SUIT] = array[new_index][SUIT]
-    array[old_index][TOTAL_CARDS] += array[new_index][TOTAL_CARDS]
-
-    array[new_index][VALUE] = 0
-    array[new_index][SUIT] = 0
-    array[new_index][TOTAL_CARDS] = 0
+def suit_match(array: np.array, index1: int, index2: int):
+    return array[index1][SUIT] == array[index2][SUIT]
 
 
 @njit
-def shift(array, index):
-    card_total = array[index + 1][TOTAL_CARDS]
+def rank_or_suit_match(array: np.array, index1: int, index2: int) -> bool:
+    return rank_match(array, index1, index2) or suit_match(array, index1, index2)
+
+
+@njit
+def move_card(array: np.array, new_index: int, old_index: int):
+    array[new_index][VALUE] = array[old_index][VALUE]
+    array[new_index][SUIT] = array[old_index][SUIT]
+    array[new_index][TOTAL_CARDS] += array[old_index][TOTAL_CARDS]
+
+    array[old_index][VALUE] = 0
+    array[old_index][SUIT] = 0
+    array[old_index][TOTAL_CARDS] = 0
+
+
+def remove_card(array: np.array, index):
+    array[index][VALUE] = 0
+    array[index][SUIT] = 0
+    array[index][TOTAL_CARDS] = 0
+
+
+def shift(array, index, empty_space=1):
+    card_total = array[index + empty_space][TOTAL_CARDS]
 
     while card_total > 0:
-        move_card(array, index, index + 1)
+        move_card(array, index, index + empty_space)
         index += 1
-        card_total = array[index + 1][TOTAL_CARDS]
+        card_total = array[index + empty_space][TOTAL_CARDS]
 
 
 @njit
