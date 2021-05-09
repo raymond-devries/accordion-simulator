@@ -7,7 +7,8 @@ import dask
 from dask import delayed
 from dask.distributed import Client
 
-from cg_simulator.core import console, multiple_simulations, simulate_recursive
+from cg_simulator.core import console
+from cg_simulator.games.accordion import multiple_simulations, simulate_recursive
 
 
 def run_simulation(
